@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap"
+        rel="stylesheet">
+    <title>Shopping List Web App</title>
+    <style>
+        body {
+            font-family: "Instrument Sans", sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #FEF7FF;
+        }
+
+        h1 {
+            font-family: "Instrument Sans", sans-serif;
+            text-align: center;
+            font-size: 45px;
+            font-weight: 500;
+            color: #1D1B20;
+        }
+
+        #app {
+            font-family: "Instrument Sans", sans-serif;
+            background-color: #F3EDF7;
+            padding: 25px;
+            border-radius: 40px;
+            gap: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #new-item {
+            font-family: "Instrument Sans", sans-serif;
+            width: 70%;
+            height: 80%;
+            padding: 5px 24px;
+            border-radius: 56px;
+            outline: none;
+            border: 1px solid #0303033a;
+        }
+
+        button {
+            font-family: "Instrument Sans", sans-serif;
+            width: auto;
+            padding: 0px 34px;
+            height: 100%;
+            background-color: #65558F;
+            border-radius: 56px;
+            outline: none;
+            border: none;
+            cursor: pointer;
+            color: white;
+        }
+
+        .write {
+            font-family: "Instrument Sans", sans-serif;
+            width: 100%;
+            height: 56px;
+            display: flex;
+            flex-direction: row;
+            gap: 12px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            text-wrap: wrap;
+            font-family: "Instrument Sans", sans-serif;
+            border-radius: 56px;
+            background-color: #E8DEF8;
+            margin: 5px 0;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .item-text {
+            flex-grow: 1;
+            margin-left: 10px;
+        }
+
+        .checked {
+            text-decoration: line-through;
+            color: #888;
+        }
+
+        .delete {
+            border-radius: 56px;
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        #share-link {
+            font-family: "Instrument Sans", sans-serif;
+            margin-top: 20px;
+        }
+
+        #copy-link {
+            color: blue;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        #copy-feedback {
+            color: green;
+            margin-left: 10px;
+            display: none;
+        }
+
+        a {
+            color: #65558F;
+            text-decoration: none;
+            font-family: "Instrument Sans", sans-serif;
+            width: auto;
+            padding: 5px 15px;
+            height: 100%;
+            background-color: #65558f38;
+            border-radius: 56px;
+            outline: none;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>To Do</h1>
+    <div id="app">
+        <div class="write">
+            <input type="text" id="new-item" placeholder="Add new item">
+            <button id="add-item">Add</button>
+        </div>
+
+        <ul id="shopping-list"></ul>
+        <div id="share-link">
+            <span id="copy-link">Copy Link</span>
+            <span id="copy-feedback">Link copied!</span>
+        </div>
+
+    </div>
+
+    <script>
+        const newItemInput = document.getElementById('new-item');
+        const addItemButton = document.getElementById('add-item');
+        const shoppingList = document.getElementById('shopping-list');
+        const shareLinkDiv = document.getElementById('share-link');
+
+        let items = JSON.parse(localStorage.getItem('shoppingList')) || [];
+
+        function updateList() {
+            shoppingList.innerHTML = '';
+            items.forEach((item, index) => {
+                const li = document.createElement('li');
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = item.checked;
+                checkbox.onchange = () => toggleItem(index);
+
+                const itemText = document.createElement('span');
+                itemText.textContent = item.text;
+                itemText.className = 'item-text' + (item.checked ? ' checked' : '');
+
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.className = 'delete';
+                deleteButton.onclick = () => deleteItem(index);
+
+                li.appendChild(checkbox);
+                li.appendChild(itemText);
+                li.appendChild(deleteButton);
+                shoppingList.appendChild(li);
+            });
+            localStorage.setItem('shoppingList', JSON.stringify(items));
+            updateShareLink();
+        }
+
+        function addItem() {
+            const newItem = newItemInput.value.trim();
+            if (newItem) {
+                items.push({ text: newItem, checked: false });
+                newItemInput.value = '';
+                updateList();
+            }
+        }
+
+        function deleteItem(index) {
+            items.splice(index, 1);
+            updateList();
+        }
+
+        function toggleItem(index) {
+            items[index].checked = !items[index].checked;
+            updateList();
+        }
+
+        function updateShareLink() {
+            const shareLink = `${window.location.origin}${window.location.pathname}?list=${encodeURIComponent(JSON.stringify(items))}`;
+            shareLinkDiv.innerHTML = `<p>Share this link: <a href="${shareLink}" target="_blank">Link</a></p>`;
+        }
+
+
+        addItemButton.addEventListener('click', addItem);
+        newItemInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addItem();
+        });
+
+        // Check for shared list in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const sharedList = urlParams.get('list');
+        if (sharedList) {
+            items = JSON.parse(decodeURIComponent(sharedList));
+            updateList();
+        } else {
+            updateList();
+        }
+    </script>
+</body>
+
+</html>
